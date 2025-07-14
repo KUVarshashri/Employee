@@ -35,4 +35,9 @@ public class EmployeesDto {
             message = "Password must contain letters and numbers"
     )
     private String password;
+
+    private DepartmentDto department;
+
+    private IDCardDto idCard;
+
 }

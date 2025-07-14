@@ -1,14 +1,19 @@
 package com.example.employeecrud.service.ServiceImpl;
 
+import com.example.employeecrud.dao.Department;
 import com.example.employeecrud.dao.Employees;
+import com.example.employeecrud.dao.IDCard;
+import com.example.employeecrud.dto.DepartmentDto;
 import com.example.employeecrud.dto.EmployeesDto;
-import com.example.employeecrud.exception.EmailAlreadyExistsException;
+import com.example.employeecrud.dto.IDCardDto;
+import com.example.employeecrud.repository.DepartmentRepo;
 import com.example.employeecrud.repository.EmployeesRepo;
 import com.example.employeecrud.service.EmployeesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,6 +22,9 @@ public class EmployeesServiceImpl implements EmployeesService {
     @Autowired
     private EmployeesRepo repo;
 
+    @Autowired
+    private DepartmentRepo departmentRepo;
+
     private EmployeesDto convertToDto(Employees employees) {
         EmployeesDto dto = new EmployeesDto();
         dto.setEmpId(employees.getEmpId());
@@ -24,6 +32,22 @@ public class EmployeesServiceImpl implements EmployeesService {
         dto.setEmail(employees.getEmail());
         dto.setPhoneNo(employees.getPhoneNo());
         dto.setPassword(employees.getPassword());
+
+        if (employees.getDepartment() != null) {
+            DepartmentDto deptDto = new DepartmentDto();
+            deptDto.setDeptId(employees.getDepartment().getDeptId());
+            deptDto.setDeptName(employees.getDepartment().getDeptName());
+            dto.setDepartment(deptDto);
+        }
+
+        if (employees.getIdCard() != null) {
+            IDCardDto cardDto = new IDCardDto();
+            cardDto.setCardId(employees.getIdCard().getCardId());
+            cardDto.setCardNumber(employees.getIdCard().getCardNumber());
+            cardDto.setEmployeeId(employees.getEmpId());
+            dto.setIdCard(cardDto);
+        }
+
         return dto;
     }
 
@@ -34,13 +58,28 @@ public class EmployeesServiceImpl implements EmployeesService {
         employees.setEmail(dto.getEmail());
         employees.setPhoneNo(dto.getPhoneNo());
         employees.setPassword(dto.getPassword());
-        return employees;
-    }
 
+        if (dto.getDepartment() != null && dto.getDepartment().getDeptId() != null) {
+            Department dept = departmentRepo.findById(dto.getDepartment().getDeptId())
+                    .orElseThrow(() -> new RuntimeException("Department not found with id: " + dto.getDepartment().getDeptId()));
+            employees.setDepartment(dept);
+        }
+
+        if (dto.getIdCard() != null && dto.getIdCard().getCardNumber() != null) {
+            IDCard card = new IDCard();
+            card.setCardId(dto.getIdCard().getCardId());
+            card.setCardNumber(dto.getIdCard().getCardNumber());
+            card.setEmployee(employees);
+            employees.setIdCard(card);
+        }
+
+        return employees;
+
+    }
     @Override
     public EmployeesDto addEmployee(EmployeesDto dto) {
-        if (repo.existsByEmail(dto.getEmail())) {
-            throw new EmailAlreadyExistsException("Email '" + dto.getEmail() + "' is already registered.");
+        if (repo.findByEmail(dto.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email already exists: " + dto.getEmail());
         }
         Employees employees = convertToEntity(dto);
         return convertToDto(repo.save(employees));
@@ -48,14 +87,14 @@ public class EmployeesServiceImpl implements EmployeesService {
 
     @Override
     public List<EmployeesDto> addAllEmployees(List<EmployeesDto> dtoList) {
-        return dtoList.stream().map(dto -> {
-            if (repo.existsByEmail(dto.getEmail())) {
-                throw new EmailAlreadyExistsException("Email '" + dto.getEmail() + "' is already registered.");
-            }
-            Employees employee = convertToEntity(dto);
-            return convertToDto(repo.save(employee));
-        }).collect(Collectors.toList());
+        return dtoList.stream()
+                .map(dto -> {
+                    Employees employee = convertToEntity(dto);
+                    return convertToDto(repo.save(employee));
+                })
+                .collect(Collectors.toList());
     }
+
     @Override
     public List<EmployeesDto> getAllEmployees() {
         return repo.findAll().stream().map(this::convertToDto).collect(Collectors.toList());
@@ -71,17 +110,30 @@ public class EmployeesServiceImpl implements EmployeesService {
     public EmployeesDto updateEmployee(Long empId, EmployeesDto dto) {
         Employees existing = repo.findById(empId).orElse(null);
         if (existing != null) {
-            if (!existing.getEmail().equals(dto.getEmail()) && repo.existsByEmail(dto.getEmail())) {
-                throw new EmailAlreadyExistsException("Email '" + dto.getEmail() + "' is already registered.");
+            // Check if the new email is already used by another employee
+            Optional<Employees> employeeWithEmail = repo.findByEmail(dto.getEmail());
+            if (employeeWithEmail.isPresent() && !employeeWithEmail.get().getEmpId().equals(empId)) {
+                throw new IllegalArgumentException("Email already exists: " + dto.getEmail());
             }
+
             existing.setName(dto.getName());
             existing.setEmail(dto.getEmail());
             existing.setPhoneNo(dto.getPhoneNo());
             existing.setPassword(dto.getPassword());
+
+            if (dto.getDepartment() != null && dto.getDepartment().getDeptId() != null) {
+                Department dept = departmentRepo.findById(dto.getDepartment().getDeptId())
+                        .orElseThrow(() -> new IllegalArgumentException("Department not found with id: " + dto.getDepartment().getDeptId()));
+                existing.setDepartment(dept);
+            } else {
+                existing.setDepartment(null);
+            }
+
             return convertToDto(repo.save(existing));
         }
         return null;
     }
+
 
     @Override
     public void deleteEmployee(Long empId) {

@@ -1,5 +1,6 @@
 package com.example.employeecrud.dto;
 
+import com.example.employeecrud.dao.Department;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
@@ -9,9 +10,9 @@ import java.util.List;
 
 @Getter
 @Setter
-public class EmployeesDtoList {
+public class DepartmentDtoList {
 
-    @NotEmpty(message = "Employee list must not be empty")
+    @NotEmpty(message = "Department list must not be empty")
     @Valid
-    private List<EmployeesDto> employees;
+    private List<Department> departments;
 }
