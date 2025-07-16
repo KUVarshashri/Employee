@@ -4,6 +4,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
+import java.util.Set;
+
 import lombok.*;
 
 @Getter
@@ -39,5 +42,7 @@ public class EmployeesDto {
     private DepartmentDto department;
 
     private IDCardDto idCard;
+
+    private Set<ProjectDto> projects;
 
 }

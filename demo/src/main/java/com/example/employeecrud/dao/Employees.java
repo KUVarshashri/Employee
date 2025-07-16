@@ -2,6 +2,9 @@ package com.example.employeecrud.dao;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.Set;
+
 @Entity
 @Getter
 @Setter
@@ -31,4 +34,13 @@ public class Employees {
         @JoinColumn(name = "department_id", referencedColumnName = "deptId")
         @JsonBackReference
         private Department department;
+
+        @ManyToMany
+        @JoinTable(
+                name = "employee_project",
+                joinColumns = @JoinColumn(name = "employee_id"),
+                inverseJoinColumns = @JoinColumn(name = "project_id")
+        )
+        private Set<Project> projects;
+
 }

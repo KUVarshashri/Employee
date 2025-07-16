@@ -1,19 +1,15 @@
 package com.example.employeecrud.service.ServiceImpl;
 
-import com.example.employeecrud.dao.Department;
-import com.example.employeecrud.dao.Employees;
-import com.example.employeecrud.dao.IDCard;
-import com.example.employeecrud.dto.DepartmentDto;
-import com.example.employeecrud.dto.EmployeesDto;
-import com.example.employeecrud.dto.IDCardDto;
+import com.example.employeecrud.dao.*;
+import com.example.employeecrud.dto.*;
 import com.example.employeecrud.repository.DepartmentRepo;
 import com.example.employeecrud.repository.EmployeesRepo;
+import com.example.employeecrud.repository.ProjectRepo;
 import com.example.employeecrud.service.EmployeesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,6 +20,9 @@ public class EmployeesServiceImpl implements EmployeesService {
 
     @Autowired
     private DepartmentRepo departmentRepo;
+
+    @Autowired
+    private ProjectRepo projectRepo;
 
     private EmployeesDto convertToDto(Employees employees) {
         EmployeesDto dto = new EmployeesDto();
@@ -74,8 +73,8 @@ public class EmployeesServiceImpl implements EmployeesService {
         }
 
         return employees;
-
     }
+
     @Override
     public EmployeesDto addEmployee(EmployeesDto dto) {
         if (repo.findByEmail(dto.getEmail()).isPresent()) {
@@ -110,7 +109,6 @@ public class EmployeesServiceImpl implements EmployeesService {
     public EmployeesDto updateEmployee(Long empId, EmployeesDto dto) {
         Employees existing = repo.findById(empId).orElse(null);
         if (existing != null) {
-            // Check if the new email is already used by another employee
             Optional<Employees> employeeWithEmail = repo.findByEmail(dto.getEmail());
             if (employeeWithEmail.isPresent() && !employeeWithEmail.get().getEmpId().equals(empId)) {
                 throw new IllegalArgumentException("Email already exists: " + dto.getEmail());
@@ -134,9 +132,35 @@ public class EmployeesServiceImpl implements EmployeesService {
         return null;
     }
 
-
     @Override
     public void deleteEmployee(Long empId) {
         repo.deleteById(empId);
+    }
+
+    @Override
+    public EmployeesDto assignProjects(Long empId, Set<String> projectNames) {
+        Employees employee = repo.findById(empId)
+                .orElseThrow(() -> new RuntimeException("Employee not found with id: " + empId));
+
+        Set<Project> projects = new HashSet<>();
+
+        for (String name : projectNames) {
+            Project project = projectRepo.findByProjectName(name);
+            if (project == null) {
+                project = new Project();
+                project.setProjectName(name);
+                project = projectRepo.save(project);
+            }
+            projects.add(project);
+        }
+
+        if (employee.getProjects() == null) {
+            employee.setProjects(projects);
+        } else {
+            employee.getProjects().addAll(projects);
+        }
+
+        Employees updated = repo.save(employee);
+        return convertToDto(updated);
     }
 }
