@@ -12,5 +12,8 @@ public class IDCardDto {
 
     private Long cardId;
     private String cardNumber;
+    private String cardType;
+    private LocalDate issueDate;
+    private LocalDate expiryDate;
     private Long employeeId;
 }

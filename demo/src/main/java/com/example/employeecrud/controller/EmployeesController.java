@@ -72,7 +72,7 @@ public class EmployeesController {
 
         Optional<Employees> optionalEmployee = employeesRepo.findById(id);
         if (optionalEmployee.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         Employees employee = optionalEmployee.get();
@@ -88,9 +88,9 @@ public class EmployeesController {
             newProjects.add(project);
         }
 
-        employee.getProjects().addAll(newProjects);
-        Employees updated = employeesRepo.save(employee);
+        employee.setProjects(newProjects);
 
-        return ResponseEntity.ok(updated);
+        Employees updated = employeesRepo.save(employee);
+        return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 }

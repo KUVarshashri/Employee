@@ -43,6 +43,8 @@ public class EmployeesDto {
 
     private IDCardDto idCard;
 
+    private BankDetailsDto bankDetails;
+
     private Set<ProjectDto> projects;
 
 }

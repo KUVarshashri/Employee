@@ -1,5 +1,5 @@
 package com.example.employeecrud.dao;
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,12 +27,15 @@ public class Employees {
         @Column(nullable = false)
         private String password;
 
+        @OneToOne(mappedBy = "employee", cascade = CascadeType.ALL)
+        private BankDetails bankDetails;
+
         @OneToOne(mappedBy = "employee",cascade = CascadeType.ALL,orphanRemoval = true)
         private IDCard idCard;
 
         @ManyToOne
         @JoinColumn(name = "department_id", referencedColumnName = "deptId")
-        @JsonBackReference
+        @JsonManagedReference
         private Department department;
 
         @ManyToMany

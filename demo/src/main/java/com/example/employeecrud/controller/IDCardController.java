@@ -33,6 +33,12 @@ public class IDCardController {
         return ResponseEntity.ok(idCardService.getAllIDCards());
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<IDCardDto> updateIDCard(@PathVariable Long id, @RequestBody IDCardDto dto) {
+        IDCardDto updatedDto = idCardService.updateIDCard(id, dto);
+        return ResponseEntity.ok(updatedDto);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteIDCard(@PathVariable Long id) {
         idCardService.deleteIDCard(id);

@@ -8,4 +8,5 @@ public interface IDCardService {
     IDCardDto getIDCardById(Long id);
     List<IDCardDto> getAllIDCards();
     void deleteIDCard(Long id);
+    IDCardDto updateIDCard(Long id, IDCardDto dto);
 }

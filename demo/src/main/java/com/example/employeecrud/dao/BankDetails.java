@@ -4,27 +4,24 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
-
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class IDCard {
+public class BankDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long cardId;
+    private Long bankId;
+
+    @Column(nullable = false)
+    private String bankName;
 
     @Column(nullable = false, unique = true)
-    private String cardNumber;
+    private String accountNumber;
 
-    private String cardType;
-
-    private LocalDate issueDate;
-
-    private LocalDate expiryDate;
+    private String ifscCode;
 
     @OneToOne
     @JoinColumn(name = "employee_id", referencedColumnName = "empId")

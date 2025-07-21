@@ -5,7 +5,7 @@ import lombok.*;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 @Entity
 @Getter
 @Setter
@@ -21,6 +21,7 @@ public class Project {
     private String projectName;
 
     @ManyToMany(mappedBy = "projects")
+    @JsonIgnore
     private Set<Employees> employees;
 
 }

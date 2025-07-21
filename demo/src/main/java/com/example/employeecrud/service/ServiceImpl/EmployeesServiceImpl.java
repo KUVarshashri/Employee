@@ -2,9 +2,7 @@ package com.example.employeecrud.service.ServiceImpl;
 
 import com.example.employeecrud.dao.*;
 import com.example.employeecrud.dto.*;
-import com.example.employeecrud.repository.DepartmentRepo;
-import com.example.employeecrud.repository.EmployeesRepo;
-import com.example.employeecrud.repository.ProjectRepo;
+import com.example.employeecrud.repository.*;
 import com.example.employeecrud.service.EmployeesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +22,9 @@ public class EmployeesServiceImpl implements EmployeesService {
     @Autowired
     private ProjectRepo projectRepo;
 
+    @Autowired
+    private BankDetailsRepo bankDetailsRepo;
+
     private EmployeesDto convertToDto(Employees employees) {
         EmployeesDto dto = new EmployeesDto();
         dto.setEmpId(employees.getEmpId());
@@ -41,10 +42,36 @@ public class EmployeesServiceImpl implements EmployeesService {
 
         if (employees.getIdCard() != null) {
             IDCardDto cardDto = new IDCardDto();
-            cardDto.setCardId(employees.getIdCard().getCardId());
-            cardDto.setCardNumber(employees.getIdCard().getCardNumber());
+            IDCard idCard = employees.getIdCard();
+            cardDto.setCardId(idCard.getCardId());
+            cardDto.setCardNumber(idCard.getCardNumber());
+            cardDto.setCardType(idCard.getCardType());
+            cardDto.setIssueDate(idCard.getIssueDate());
+            cardDto.setExpiryDate(idCard.getExpiryDate());
             cardDto.setEmployeeId(employees.getEmpId());
             dto.setIdCard(cardDto);
+        }
+
+        if (employees.getBankDetails() != null) {
+            BankDetailsDto bankDto = new BankDetailsDto();
+            bankDto.setBankId(employees.getBankDetails().getBankId());
+            bankDto.setBankName(employees.getBankDetails().getBankName());
+            bankDto.setAccountNumber(employees.getBankDetails().getAccountNumber());
+            bankDto.setIfscCode(employees.getBankDetails().getIfscCode());
+            bankDto.setEmployeeId(employees.getEmpId());
+            dto.setBankDetails(bankDto);
+        }
+
+        if (employees.getProjects() != null && !employees.getProjects().isEmpty()) {
+            Set<ProjectDto> projectDtos = employees.getProjects().stream()
+                    .map(project -> {
+                        ProjectDto pd = new ProjectDto();
+                        pd.setProjectId(project.getProjectId());
+                        pd.setProjectName(project.getProjectName());
+                        return pd;
+                    })
+                    .collect(Collectors.toSet());
+            dto.setProjects(projectDtos);
         }
 
         return dto;
@@ -68,8 +95,34 @@ public class EmployeesServiceImpl implements EmployeesService {
             IDCard card = new IDCard();
             card.setCardId(dto.getIdCard().getCardId());
             card.setCardNumber(dto.getIdCard().getCardNumber());
+            card.setCardType(dto.getIdCard().getCardType());
+            card.setIssueDate(dto.getIdCard().getIssueDate());
+            card.setExpiryDate(dto.getIdCard().getExpiryDate());
             card.setEmployee(employees);
             employees.setIdCard(card);
+        }
+
+        if (dto.getBankDetails() != null) {
+            BankDetails bank = new BankDetails();
+            bank.setBankId(dto.getBankDetails().getBankId());
+            bank.setBankName(dto.getBankDetails().getBankName());
+            bank.setAccountNumber(dto.getBankDetails().getAccountNumber());
+            bank.setIfscCode(dto.getBankDetails().getIfscCode());
+            bank.setEmployee(employees);
+            employees.setBankDetails(bank);
+        }
+
+        if (dto.getProjects() != null && !dto.getProjects().isEmpty()) {
+            Set<Project> projects = dto.getProjects().stream().map(pd -> {
+                Project project = projectRepo.findById(pd.getProjectId())
+                        .orElseGet(() -> {
+                            Project newProject = new Project();
+                            newProject.setProjectName(pd.getProjectName());
+                            return projectRepo.save(newProject);
+                        });
+                return project;
+            }).collect(Collectors.toSet());
+            employees.setProjects(projects);
         }
 
         return employees;
@@ -125,6 +178,17 @@ public class EmployeesServiceImpl implements EmployeesService {
                 existing.setDepartment(dept);
             } else {
                 existing.setDepartment(null);
+            }
+
+            if (dto.getBankDetails() != null) {
+                BankDetails bank = existing.getBankDetails() != null ? existing.getBankDetails() : new BankDetails();
+                bank.setBankName(dto.getBankDetails().getBankName());
+                bank.setAccountNumber(dto.getBankDetails().getAccountNumber());
+                bank.setIfscCode(dto.getBankDetails().getIfscCode());
+                bank.setEmployee(existing);
+                existing.setBankDetails(bank);
+            } else {
+                existing.setBankDetails(null);
             }
 
             return convertToDto(repo.save(existing));

@@ -1,13 +1,16 @@
 package com.example.employeecrud.service.ServiceImpl;
 
+import com.example.employeecrud.dao.Employees;
 import com.example.employeecrud.dao.Project;
 import com.example.employeecrud.dto.ProjectDto;
+import com.example.employeecrud.repository.EmployeesRepo;
 import com.example.employeecrud.repository.ProjectRepo;
 import com.example.employeecrud.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -15,6 +18,8 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Autowired
     private ProjectRepo projectRepo;
+    @Autowired
+    private EmployeesRepo employeesRepo;
 
     private ProjectDto convertToDto(Project entity) {
         return new ProjectDto(entity.getProjectId(), entity.getProjectName());
@@ -49,6 +54,12 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public void deleteProject(Long id) {
+        Project project=projectRepo.findById(id).orElseThrow(() -> new RuntimeException("Project not found"));
+        Set<Employees> employeesSet=project.getEmployees();
+        for(Employees employee:employeesSet){
+            employee.getProjects().remove(project);
+            employeesRepo.save(employee);
+        }
         projectRepo.deleteById(id);
     }
 
