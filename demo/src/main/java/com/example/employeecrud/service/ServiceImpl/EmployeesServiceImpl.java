@@ -25,6 +25,9 @@ public class EmployeesServiceImpl implements EmployeesService {
     @Autowired
     private BankDetailsRepo bankDetailsRepo;
 
+    @Autowired
+    private AddressRepo addressRepo;
+
     private EmployeesDto convertToDto(Employees employees) {
         EmployeesDto dto = new EmployeesDto();
         dto.setEmpId(employees.getEmpId());
@@ -72,6 +75,22 @@ public class EmployeesServiceImpl implements EmployeesService {
                     })
                     .collect(Collectors.toSet());
             dto.setProjects(projectDtos);
+        }
+
+        if (employees.getAddresses() != null && !employees.getAddresses().isEmpty()) {
+            List<AddressDto> addressDtos = employees.getAddresses().stream()
+                    .map(address -> {
+                        AddressDto ad = new AddressDto();
+                        ad.setId(address.getAddressId());
+                        ad.setStreet(address.getStreet());
+                        ad.setCity(address.getCity());
+                        ad.setState(address.getState());
+                        ad.setPostalCode(address.getPostalCode());
+                        ad.setEmployeeId(employees.getEmpId());
+                        return ad;
+                    })
+                    .collect(Collectors.toList());
+            dto.setAddresses(addressDtos);
         }
 
         return dto;
@@ -123,6 +142,20 @@ public class EmployeesServiceImpl implements EmployeesService {
                 return project;
             }).collect(Collectors.toSet());
             employees.setProjects(projects);
+        }
+
+        if (dto.getAddresses() != null && !dto.getAddresses().isEmpty()) {
+            List<Address> addresses = dto.getAddresses().stream().map(ad -> {
+                Address address = new Address();
+                address.setAddressId(ad.getId());
+                address.setStreet(ad.getStreet());
+                address.setCity(ad.getCity());
+                address.setState(ad.getState());
+                address.setPostalCode(ad.getPostalCode());
+                address.setEmployee(employees);
+                return address;
+            }).collect(Collectors.toList());
+            employees.setAddresses(addresses);
         }
 
         return employees;

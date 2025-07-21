@@ -1,8 +1,11 @@
 package com.example.employeecrud.dao;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -33,9 +36,13 @@ public class Employees {
         @OneToOne(mappedBy = "employee",cascade = CascadeType.ALL,orphanRemoval = true)
         private IDCard idCard;
 
+        @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+        @JsonManagedReference
+        private List<Address> addresses;
+
         @ManyToOne
         @JoinColumn(name = "department_id", referencedColumnName = "deptId")
-        @JsonManagedReference
+        @JsonBackReference
         private Department department;
 
         @ManyToMany
