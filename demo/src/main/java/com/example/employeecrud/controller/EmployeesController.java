@@ -28,6 +28,9 @@ public class EmployeesController {
     @Autowired
     private ProjectRepo projectRepo;
 
+    @Autowired
+    private EmployeesRepo emprepo;
+
     @PostMapping("/add")
     public ResponseEntity<EmployeesDto> createEmployee(@Valid @RequestBody EmployeesDto employeesDto) {
         EmployeesDto savedEmployee = employeesService.addEmployee(employeesDto);

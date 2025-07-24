@@ -5,6 +5,7 @@ import com.example.employeecrud.dto.*;
 import com.example.employeecrud.repository.*;
 import com.example.employeecrud.service.EmployeesService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -27,6 +28,9 @@ public class EmployeesServiceImpl implements EmployeesService {
 
     @Autowired
     private AddressRepo addressRepo;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private EmployeesDto convertToDto(Employees employees) {
         EmployeesDto dto = new EmployeesDto();
@@ -102,7 +106,7 @@ public class EmployeesServiceImpl implements EmployeesService {
         employees.setName(dto.getName());
         employees.setEmail(dto.getEmail());
         employees.setPhoneNo(dto.getPhoneNo());
-        employees.setPassword(dto.getPassword());
+        employees.setPassword(passwordEncoder.encode(dto.getPassword()));
 
         if (dto.getDepartment() != null && dto.getDepartment().getDeptId() != null) {
             Department dept = departmentRepo.findById(dto.getDepartment().getDeptId())
@@ -203,7 +207,7 @@ public class EmployeesServiceImpl implements EmployeesService {
             existing.setName(dto.getName());
             existing.setEmail(dto.getEmail());
             existing.setPhoneNo(dto.getPhoneNo());
-            existing.setPassword(dto.getPassword());
+            existing.setPassword(passwordEncoder.encode(dto.getPassword()));
 
             if (dto.getDepartment() != null && dto.getDepartment().getDeptId() != null) {
                 Department dept = departmentRepo.findById(dto.getDepartment().getDeptId())
