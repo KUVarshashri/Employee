@@ -6,8 +6,11 @@ import com.example.employeecrud.dto.EmployeesDto;
 import com.example.employeecrud.dto.EmployeesDtoList;
 import com.example.employeecrud.repository.EmployeesRepo;
 import com.example.employeecrud.repository.ProjectRepo;
+import com.example.employeecrud.security.JwtUtil;
 import com.example.employeecrud.service.EmployeesService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.apache.tomcat.util.http.parser.Authorization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +34,9 @@ public class EmployeesController {
     @Autowired
     private EmployeesRepo emprepo;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @PostMapping("/add")
     public ResponseEntity<EmployeesDto> createEmployee(@Valid @RequestBody EmployeesDto employeesDto) {
         EmployeesDto savedEmployee = employeesService.addEmployee(employeesDto);
@@ -49,15 +55,21 @@ public class EmployeesController {
         return ResponseEntity.ok(list);
     }
 
-    @GetMapping("/{empId}")
-    public ResponseEntity<EmployeesDto> getEmployeeById(@PathVariable Long empId) {
+    @GetMapping("/")
+    public ResponseEntity<EmployeesDto> getEmployeeById(HttpServletRequest request) {
+        String authHeader= request.getHeader("Authorization");
+        String token= authHeader.substring(7);
+        long empId=jwtUtil.extractsEmployeesId(token);
         EmployeesDto dto = employeesService.getEmployeeById(empId);
         return dto != null ? ResponseEntity.ok(dto) : ResponseEntity.notFound().build();
     }
 
-    @PutMapping("/update/{empId}")
-    public ResponseEntity<EmployeesDto> updateEmployee(@PathVariable Long empId,
+    @PutMapping("/update")
+    public ResponseEntity<EmployeesDto> updateEmployee(HttpServletRequest request,
                                                        @Valid @RequestBody EmployeesDto updatedDto) {
+        String authHeader= request.getHeader("Authorization");
+        String token= authHeader.substring(7);
+        long empId=jwtUtil.extractsEmployeesId(token);
         EmployeesDto updatedEmployee = employeesService.updateEmployee(empId, updatedDto);
         return updatedEmployee != null ? ResponseEntity.ok(updatedEmployee) : ResponseEntity.notFound().build();
     }
@@ -68,11 +80,13 @@ public class EmployeesController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{id}/assign-projects")
-    public ResponseEntity<Employees> assignProjectsToEmployee(
+    @PutMapping("/assign-projects")
+    public ResponseEntity<Employees> assignProjectsToEmployee(HttpServletRequest request,
             @PathVariable Long id,
             @RequestBody Set<String> projectNames) {
-
+        String authHeader= request.getHeader("Authorization");
+        String token= authHeader.substring(7);
+        long empId=jwtUtil.extractsEmployeesId(token);
         Optional<Employees> optionalEmployee = employeesRepo.findById(id);
         if (optionalEmployee.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
