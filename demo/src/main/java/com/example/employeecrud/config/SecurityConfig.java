@@ -1,7 +1,7 @@
 package com.example.employeecrud.config;
 
 import com.example.employeecrud.security.JwtFilter;
-import com.example.employeecrud.service.CustomUserDetailsService;
+import com.example.employeecrud.service.ServiceImpl.CustomUserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -55,7 +55,7 @@ public class SecurityConfig {
     //            .roles("ADMIN")
     //            .build();
     //    return new InMemoryUserDetailsManager(user, admin);
-          return new CustomUserDetailsService();
+          return new CustomUserDetailsServiceImpl();
     }
     @Bean
     public DaoAuthenticationProvider authenticationProvider(){

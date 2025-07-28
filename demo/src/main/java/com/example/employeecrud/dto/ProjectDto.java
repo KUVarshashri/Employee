@@ -2,8 +2,7 @@ package com.example.employeecrud.dto;
 
 import lombok.*;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProjectDto {

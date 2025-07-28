@@ -3,11 +3,10 @@ package com.example.employeecrud.controller;
 import com.example.employeecrud.dao.Employees;
 import com.example.employeecrud.repository.EmployeesRepo;
 import com.example.employeecrud.security.JwtUtil;
-import com.example.employeecrud.service.CustomUserDetailsService;
+import com.example.employeecrud.service.ServiceImpl.CustomUserDetailsServiceImpl;
+import com.example.employeecrud.dto.GenericResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,6 +19,13 @@ import java.util.Map;
 @RequestMapping("/auth")
 public class AuthController {
 
+    private static final String LOGIN_SUCCESS = "Login successful";
+    private static final String INVALID_CREDENTIALS = "Invalid username or password";
+    private static final String REFRESH_SUCCESS = "Token refreshed successfully";
+    private static final String REFRESH_REQUIRED = "Refresh token is required";
+    private static final String REFRESH_INVALID = "Invalid refresh token";
+    private static final String USER_NOT_FOUND = "User not found";
+
     @Autowired
     private AuthenticationManager authManager;
 
@@ -31,37 +37,58 @@ public class AuthController {
 
     @Autowired
     @Qualifier("customUserDetailsService")
-    private CustomUserDetailsService userDetailsService;
+    private CustomUserDetailsServiceImpl userDetailsService;
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody Employees employees) {
+    public GenericResponseEntity<Map<String, String>> login(@RequestBody Employees employees) {
         try {
             Authentication authentication = authManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(employees.getEmail(), employees.getPassword()));
+                    new UsernamePasswordAuthenticationToken(employees.getEmail(), employees.getPassword())
+            );
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             Employees dbEmployee = employeesRepo.findByEmail(employees.getEmail())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
 
             String accessToken = jwtUtil.generateToken(userDetails, dbEmployee);
             String refreshToken = jwtUtil.generateRefreshToken(userDetails);
 
-            return ResponseEntity.ok(Map.of(
+            Map<String, String> tokens = Map.of(
                     "accessToken", accessToken,
                     "refreshToken", refreshToken
-            ));
+            );
+
+            return GenericResponseEntity.<Map<String, String>>builder()
+                    .message(LOGIN_SUCCESS)
+                    .data(tokens)
+                    .success(true)
+                    .statusCode(200)
+                    .status("OK")
+                    .build();
+
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Invalid username or password"));
+            return GenericResponseEntity.<Map<String, String>>builder()
+                    .message(INVALID_CREDENTIALS)
+                    .data(null)
+                    .success(false)
+                    .statusCode(401)
+                    .status("UNAUTHORIZED")
+                    .build();
         }
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<Map<String, String>> refreshToken(@RequestBody Map<String, String> body) {
+    public GenericResponseEntity<Map<String, String>> refreshToken(@RequestBody Map<String, String> body) {
         String refreshToken = body.get("refreshToken");
 
         if (refreshToken == null || refreshToken.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Refresh token is required"));
+            return GenericResponseEntity.<Map<String, String>>builder()
+                    .message(REFRESH_REQUIRED)
+                    .data(null)
+                    .success(false)
+                    .statusCode(400)
+                    .status("BAD_REQUEST")
+                    .build();
         }
 
         try {
@@ -70,21 +97,40 @@ public class AuthController {
 
             if (jwtUtil.validateToken(refreshToken, userDetails)) {
                 Employees dbEmployee = employeesRepo.findByEmail(username)
-                        .orElseThrow(() -> new RuntimeException("User not found"));
+                        .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
 
                 String newAccessToken = jwtUtil.generateToken(userDetails, dbEmployee);
 
-                return ResponseEntity.ok(Map.of(
+                Map<String, String> tokens = Map.of(
                         "accessToken", newAccessToken,
                         "refreshToken", refreshToken
-                ));
+                );
+
+                return GenericResponseEntity.<Map<String, String>>builder()
+                        .message(REFRESH_SUCCESS)
+                        .data(tokens)
+                        .success(true)
+                        .statusCode(200)
+                        .status("OK")
+                        .build();
             } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "Invalid refresh token"));
+                return GenericResponseEntity.<Map<String, String>>builder()
+                        .message(REFRESH_INVALID)
+                        .data(null)
+                        .success(false)
+                        .statusCode(403)
+                        .status("FORBIDDEN")
+                        .build();
             }
+
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Invalid refresh token"));
+            return GenericResponseEntity.<Map<String, String>>builder()
+                    .message(REFRESH_INVALID)
+                    .data(null)
+                    .success(false)
+                    .statusCode(403)
+                    .status("FORBIDDEN")
+                    .build();
         }
     }
 }

@@ -7,8 +7,8 @@ import lombok.Setter;
 
 import java.util.List;
 
-@Getter
 @Setter
+@Getter
 public class EmployeesDtoList {
 
     @NotEmpty(message = "Employee list must not be empty")

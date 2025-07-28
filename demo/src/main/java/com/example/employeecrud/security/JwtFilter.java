@@ -3,7 +3,7 @@ package com.example.employeecrud.security;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import com.example.employeecrud.service.CustomUserDetailsService;
+import com.example.employeecrud.service.ServiceImpl.CustomUserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,7 +24,7 @@ public class JwtFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
 
     @Autowired
-    private CustomUserDetailsService customUserDetailsService;
+    private CustomUserDetailsServiceImpl customUserDetailsService;
 
 
     @Override
